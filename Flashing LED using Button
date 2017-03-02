@@ -1,0 +1,20 @@
+from time import sleep     # Import sleep Library
+import RPi.GPIO as GPIO    # Import GPIO Library
+GPIO.setmode(GPIO.BOARD)   # Use Physical Pin Numbering Scheme
+button=16                 # Button is connected to physical pin 16
+
+LED=7                    # LED 1 is connected to physical pin 7
+GPIO.setup(button,GPIO.IN,pull_up_down=GPIO.PUD_UP) # Make button an input, Act$
+GPIO.setup(LED,GPIO.OUT,) # Make LED 1 an Output
+BS1=False                  # Set Flag BS1 to indicate LED is initially off
+while(1):                  # Create an infinite Loop
+        if GPIO.input(button)==0:            # Look for button 1 press
+                print "Button Was Pressed:"
+                if BS1==False:                # If the LED is off
+                        GPIO.output(LED,True)# turn it on
+                        BS1=True              # Set Flag to show LED is now On
+                        sleep(.5)             # Delay
+                else:                         # If the LED is on
+                        GPIO.output(LED,False) # Turn LED off
+                        BS1=False              
+                        sleep(.5)
