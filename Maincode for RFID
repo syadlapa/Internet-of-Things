@@ -1,0 +1,81 @@
+import matplotlib.pyplot as plt
+from pymongo import MongoClient
+import RPi.GPIO as GPIO
+import MFRC522
+import signal
+import os
+import time
+import send
+import datetime
+GPIO.setwarnings(False)
+continue_reading = True
+
+def end_read(signal,frame):
+    global continue_reading
+    print "Ctrl+C captured, ending read"
+    continue_reading = False
+    GPIO.cleanup()
+
+signal.signal(signal.SIGINT, end_read)
+
+MIFAREReader = MFRC522.MFRC522()
+client = MongoClient('mongodb://tulasi:tulasi@ds121091.mlab.com:21091/aurora')
+
+mydb = client['aurora']
+
+print "Welcome to id reading"
+print "Press Ctrl+C to stop."
+
+while continue_reading:
+
+    (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+    msg='NO'
+    if status == MIFAREReader.MI_OK:
+        print "Card detected"
+        (status,uid) = MIFAREReader.MFRC522_Anticoll()
+        pcount=0
+        ncount=0
+        print "Card read UID: "+str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])
+        key1=str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])
+        temp=(uid[3])
+        obj= mydb.aurora.find_one({"bagId":key1})
+        obj2=mydb.Counter.find_one({"type":"count"})
+        for key3, value in obj2.items():
+                if key3=="pcount":
+                        pcount = value
+				if key3=="ncount":
+                        ncount = value
+        print key1
+        obj= mydb.aurora.find_one({"bagId":"105^"})
+        if temp==105:
+
+            GPIO.setup(38, GPIO.OUT)
+            GPIO.output(38,True)## Switch off pin 13
+            time.sleep(0.11)## Wait for 2 secs
+            GPIO.output(38,False)
+            os.system('python mail.py')
+            pcount = pcount + 1
+            print pcount
+            mydb.Counter.insert({"date":datetime.datetime.utcnow()})
+            mydb.Counter.update({ "type" : "count" },{'$set': { "pcount": pcount }})
+        else:
+            msg=str(uid[0])+","+str(uid[1])+","+str(uid[2])+","+str(uid[3])
+            GPIO.setup(11, GPIO.OUT)
+            GPIO.output(11,True)## Switch off pin 13
+            time.sleep(0.11)## Wait for 2 secs
+            GPIO.output(11,False)
+            ncount = ncount + 1
+            print ncount
+			os.system('python buzz.py')
+            mydb.Counter.update({ "type" : "count" },{'$set': { "ncount": ncount }})
+        percent=(float(pcount)/float((pcount+ncount)))*float(100)
+        print percent
+        mydb.Counter.insert({"type":"percent","date":datetime.datetime.utcnow()})
+        plt.plot(pcount,ncount)
+        if obj != None :
+                for key2,value in obj.items():
+                        if key2=="name":
+                          print(key2,value)
+    send.sendData(msg)
+
+		
