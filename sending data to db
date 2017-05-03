@@ -1,0 +1,24 @@
+# mongo1.py
+
+from pymongo import MongoClient
+
+client = MongoClient('mongodb://tulasi:tulasi@ds121091.mlab.com:21091/aurora')
+
+# data base name : 'aurora'
+mydb = client['aurora']
+
+import datetime
+
+myrecord = {
+        "bagId": "94,234,13,105",
+        "name" : "Yadlapalli",
+        "email" :"yedlapalli1995@gmail.com",
+        "date" : datetime.datetime.utcnow()
+        }
+
+record_id = mydb.aurora.insert(myrecord)
+
+print record_id
+print mydb.collection_names()
+
+
