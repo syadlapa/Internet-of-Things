@@ -1,0 +1,9 @@
+import smtplib
+
+server = smtplib.SMTP('smtp.gmail.com', 587)
+server.starttls()
+server.login("baggagetrack24@gmail.com", "tulasi@12")
+
+msg = "Your bag is safe and will be available for pickup when u reach your destination!"
+server.sendmail("baggagetrack24@gmail.com", "your email id", msg)
+server.quit()
